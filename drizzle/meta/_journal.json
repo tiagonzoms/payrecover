@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1772806330128,
+      "tag": "0000_stale_yellow_claw",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1772806553610,
+      "tag": "0001_thankful_killraven",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1773632288138,
+      "tag": "0002_kind_storm",
+      "breakpoints": true
+    }
+  ]
+}

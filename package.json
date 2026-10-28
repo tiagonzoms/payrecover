@@ -3,15 +3,15 @@
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
-  "scripts": {
-    "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
-    "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "start": "NODE_ENV=production node dist/index.js",
-    "check": "tsc --noEmit",
-    "format": "prettier --write .",
-    "test": "vitest run",
-    "db:push": "drizzle-kit generate && drizzle-kit migrate"
-  },
+ "scripts": {
+  "dev": "node -e \"process.env.NODE_ENV='development'; import('tsx/cli')\" watch server/_core/index.ts",
+  "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+  "start": "node dist/index.js",
+  "check": "tsc --noEmit",
+  "format": "prettier --write .",
+  "test": "vitest run",
+  "db:push": "drizzle-kit generate && drizzle-kit migrate"
+},
   "dependencies": {
     "@ai-sdk/openai": "^3.0.12",
     "@ai-sdk/react": "^3.0.40",
@@ -46,6 +46,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@streamdown/code": "^1.0.1",
     "@streamdown/mermaid": "^1.0.1",
+    "@supabase/supabase-js": "^2.118.0",
     "@tanstack/react-query": "^5.90.2",
     "@trpc/client": "^11.6.0",
     "@trpc/react-query": "^11.6.0",
@@ -68,6 +69,7 @@
     "mysql2": "^3.15.0",
     "nanoid": "^5.1.5",
     "next-themes": "^0.4.6",
+    "postgres": "^3.4.9",
     "react": "^19.2.1",
     "react-day-picker": "^9.11.1",
     "react-dom": "^19.2.1",
