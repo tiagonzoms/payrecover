@@ -3,6 +3,7 @@ import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import { registerStripeConnectRoutes } from "../stripeConnect";
 import { registerOAuthRoutes } from "./oauth";
 import { registerChatRoutes } from "./chat";
 import { stripeWebhookRouter } from "../webhooks/stripe";
@@ -38,6 +39,7 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  registerStripeConnectRoutes(app);
   // Chat API with streaming and tool calling
   registerChatRoutes(app);
   // tRPC API
