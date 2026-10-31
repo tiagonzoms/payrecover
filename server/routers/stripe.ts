@@ -39,6 +39,7 @@ export const stripeRouter = router({
           success_url: `${ctx.req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${ctx.req.headers.origin}/pricing`,
           customer_email: ctx.user.email || undefined,
+          subscription_data: { metadata: { userId: ctx.user.id.toString() } },
           metadata: {
             userId: ctx.user.id.toString(),
             planId: input.planId,
@@ -50,6 +51,7 @@ export const stripeRouter = router({
           sessionId: session.id,
         };
       } catch (error) {
+        if (error instanceof TRPCError) throw error;
         console.error("[Stripe] Error creating checkout session:", error);
         throw new Error("Failed to create checkout session");
       }
@@ -60,7 +62,7 @@ export const stripeRouter = router({
    */
   getCheckoutSession: protectedProcedure
     .input(z.object({ sessionId: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       if (!stripe) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -70,8 +72,12 @@ export const stripeRouter = router({
 
       try {
         const session = await stripe.checkout.sessions.retrieve(input.sessionId);
+        if (session.metadata?.userId !== ctx.user.id.toString()) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
         return session;
       } catch (error) {
+        if (error instanceof TRPCError) throw error;
         console.error("[Stripe] Error retrieving checkout session:", error);
         throw new Error("Failed to retrieve checkout session");
       }
@@ -107,7 +113,7 @@ export const stripeRouter = router({
    */
   cancelSubscription: protectedProcedure
     .input(z.object({ subscriptionId: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       if (!stripe) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -116,9 +122,14 @@ export const stripeRouter = router({
       }
 
       try {
+        const existing = await stripe.subscriptions.retrieve(input.subscriptionId);
+        if (existing.metadata?.userId !== ctx.user.id.toString()) {
+          throw new TRPCError({ code: "FORBIDDEN" });
+        }
         const subscription = await stripe.subscriptions.cancel(input.subscriptionId);
         return subscription;
       } catch (error) {
+        if (error instanceof TRPCError) throw error;
         console.error("[Stripe] Error canceling subscription:", error);
         throw new Error("Failed to cancel subscription");
       }
@@ -149,6 +160,7 @@ export const stripeRouter = router({
       } else {
         const customer = await stripe.customers.create({
           email: ctx.user.email || undefined,
+
           metadata: {
             userId: ctx.user.id.toString(),
           },
