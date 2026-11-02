@@ -39,7 +39,7 @@ stripeWebhookRouter.post(
     }
 
     // Gérer les événements de test
-    if (event.id.startsWith("evt_test_")) {
+    if (event.id.startsWith("evt_test_") && event.type !== "invoice.payment_failed") {
       console.log("[Webhook] Test event detected, returning verification response");
       return res.json({ verified: true });
     }
@@ -67,7 +67,12 @@ stripeWebhookRouter.post(
           break;
 
         case "invoice.payment_failed":
-          await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+          // Platform billing is outside connected-account recovery.
+          if (!event.account) {
+            console.log("[Webhook] Ignoring invoice.payment_failed without Connect context");
+            return res.json({ received: true, ignored: true, reason: "missing_connect_account" });
+          }
+          await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice, event.account);
           break;
 
         case "payment_intent.succeeded":
@@ -95,7 +100,7 @@ stripeWebhookRouter.post(
  */
 async function handleInvoicePaymentFailed(
   invoice: Stripe.Invoice,
-  stripeAccountId?: string
+  stripeAccountId: string
 ) {
   console.log("[Webhook] Invoice payment failed:", invoice.id);
 
@@ -107,6 +112,8 @@ async function handleInvoicePaymentFailed(
     return;
   }
 
+  // The lookup returns undefined without a database; infrastructure failures must retry.
+  if (!(await getDb())) throw new Error("Database not available");
   const company = await getCompanyByStripeAccountId(stripeAccountId);
 
   if (!company) {
@@ -114,7 +121,7 @@ async function handleInvoicePaymentFailed(
       "[Webhook] No company found for Stripe account:",
       stripeAccountId
     );
-    return;
+    throw new Error("Connected Stripe account has no company mapping");
   }
 
   if (!invoice.id || !invoice.customer) {

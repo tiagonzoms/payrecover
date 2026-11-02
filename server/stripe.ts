@@ -17,9 +17,11 @@ export async function handleStripeWebhook(event: Stripe.Event) {
     case "charge.failed":
       await handleChargeFailed(event.data.object as Stripe.Charge);
       break;
-    case "invoice.payment_failed":
-      await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
-      break;
+   case "invoice.payment_failed":
+  await handleInvoicePaymentFailed(
+    event.data.object as Stripe.Invoice
+  );
+  break;
     case "invoice.payment_succeeded":
       await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
       break;
