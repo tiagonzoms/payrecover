@@ -10,7 +10,8 @@
   "check": "tsc --noEmit",
   "format": "prettier --write .",
   "test": "vitest run",
-  "db:push": "drizzle-kit generate && drizzle-kit migrate"
+  "db:generate:pg": "drizzle-kit generate --config=drizzle.config.pg.ts",
+  "db:migrate:pg": "drizzle-kit migrate --config=drizzle.config.pg.ts"
 },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.12",
