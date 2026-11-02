@@ -13,6 +13,17 @@ CREATE TABLE "stripeWebhookEvents" (
 	CONSTRAINT "stripeWebhookEvents_account_mode_event_unique" UNIQUE("stripeAccountId","livemode","stripeEventId")
 );
 --> statement-breakpoint
+ALTER TABLE public."stripeWebhookEvents"
+  ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+REVOKE ALL PRIVILEGES
+  ON TABLE public."stripeWebhookEvents"
+  FROM PUBLIC, anon, authenticated;
+--> statement-breakpoint
+REVOKE ALL PRIVILEGES
+  ON SEQUENCE public."stripeWebhookEvents_id_seq"
+  FROM PUBLIC, anon, authenticated;
+--> statement-breakpoint
 ALTER TABLE "failedPayments" ADD COLUMN "stripeAccountId" varchar(255);--> statement-breakpoint
 ALTER TABLE "failedPayments" ADD COLUMN "livemode" boolean;--> statement-breakpoint
 ALTER TABLE "failedPayments" ADD COLUMN "lastStripeEventId" varchar(255);--> statement-breakpoint

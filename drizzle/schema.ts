@@ -99,7 +99,7 @@ export const stripeWebhookEvents = pgTable("stripeWebhookEvents", {
     table.livemode,
     table.stripeEventId,
   ),
-]);
+]).enableRLS();
 
 export type StripeWebhookEvent = typeof stripeWebhookEvents.$inferSelect;
 export type InsertStripeWebhookEvent = typeof stripeWebhookEvents.$inferInsert;

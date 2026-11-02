@@ -844,7 +844,7 @@
       },
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
+      "isRLSEnabled": true
     },
     "public.users": {
       "name": "users",
