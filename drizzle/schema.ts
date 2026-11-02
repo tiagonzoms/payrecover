@@ -8,6 +8,7 @@ import {
   serial,
   text,
   timestamp,
+  unique,
   varchar,
 } from "drizzle-orm/pg-core";
 
@@ -26,6 +27,7 @@ export const failedPaymentStatusEnum = pgEnum("failedPaymentStatus", ["pending",
 export const recoveryAttemptTypeEnum = pgEnum("recoveryAttemptType", ["email", "retry", "manual"]);
 export const recoveryAttemptResultEnum = pgEnum("recoveryAttemptResult", ["pending", "sent", "failed", "recovered"]);
 export const emailLogStatusEnum = pgEnum("emailLogStatus", ["pending", "sent", "failed", "bounced"]);
+export const stripeWebhookProcessingStatusEnum = pgEnum("stripeWebhookProcessingStatus", ["pending", "processing", "processed", "failed", "ignored"]);
 export const notificationTypeEnum = pgEnum("notificationType", ["payment_recovered", "campaign_completed", "payment_failed", "alert", "info"]);
 
 export const users = pgTable("users", {
@@ -78,6 +80,30 @@ export const stripeAccounts = pgTable("stripeAccounts", {
 export type StripeAccount = typeof stripeAccounts.$inferSelect;
 export type InsertStripeAccount = typeof stripeAccounts.$inferInsert;
 
+// Connect event identity is scoped by account and environment. This table stores
+// metadata only; processing and transaction semantics are implemented separately.
+export const stripeWebhookEvents = pgTable("stripeWebhookEvents", {
+  id: serial("id").primaryKey(),
+  stripeEventId: varchar("stripeEventId", { length: 255 }).notNull(),
+  stripeAccountId: varchar("stripeAccountId", { length: 255 }).notNull(),
+  livemode: boolean("livemode").notNull(),
+  eventType: varchar("eventType", { length: 255 }).notNull(),
+  eventCreatedAt: timestamp("eventCreatedAt", { withTimezone: true }).notNull(),
+  processingStatus: stripeWebhookProcessingStatusEnum("processingStatus").default("pending").notNull(),
+  processedAt: timestamp("processedAt", { withTimezone: true }),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow().notNull(),
+}, table => [
+  unique("stripeWebhookEvents_account_mode_event_unique").on(
+    table.stripeAccountId,
+    table.livemode,
+    table.stripeEventId,
+  ),
+]);
+
+export type StripeWebhookEvent = typeof stripeWebhookEvents.$inferSelect;
+export type InsertStripeWebhookEvent = typeof stripeWebhookEvents.$inferInsert;
+
 export const recoveryCampaigns = pgTable("recoveryCampaigns", {
   id: serial("id").primaryKey(),
   companyId: integer("companyId").notNull(),
@@ -112,6 +138,11 @@ export type InsertEmailSequence = typeof emailSequences.$inferInsert;
 export const failedPayments = pgTable("failedPayments", {
   id: serial("id").primaryKey(),
   companyId: integer("companyId").notNull(),
+  // NULL means the historical context is unknown; never infer test mode.
+  stripeAccountId: varchar("stripeAccountId", { length: 255 }),
+  livemode: boolean("livemode"),
+  lastStripeEventId: varchar("lastStripeEventId", { length: 255 }),
+  lastStripeEventCreatedAt: timestamp("lastStripeEventCreatedAt", { withTimezone: true }),
   stripeInvoiceId: varchar("stripeInvoiceId", { length: 255 }).notNull(),
   stripeCustomerId: varchar("stripeCustomerId", { length: 255 }).notNull(),
   customerEmail: varchar("customerEmail", { length: 320 }),
